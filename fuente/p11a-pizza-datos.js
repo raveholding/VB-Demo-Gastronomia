@@ -110,7 +110,7 @@ const dpStaffOf=r=>S.employees.filter(e=>e.active&&e.dpRol===r);
 const dpHalfPrice=pr=>Math.round(pr*0.54/500)*500;
 function pizzaBase(d){if(typeof window==='undefined'||!window.__dpReady)return d;
  const NM='Di Parma';
- d.tenant=Object.assign({},d.tenant,{name:NM,legal:'Di Parma Pizzería (demo de ejemplo)',slogan:'Pizzería de masa madre · Salta',address:'Balcarce 850, Salta Capital (dato de ejemplo)',wa:'',phone:'',caja:1,ig:'',fb:''});
+ d.tenant=Object.assign({},d.tenant,{name:NM,legal:'Di Parma Pizzería',slogan:'Pizzería de masa madre · Salta',address:'Balcarce 850, Salta (ejemplo)',wa:'',phone:'(0387) 400-0850',cuit:'30-71654321-4',iva:'IVA Responsable Inscripto (ejemplo)',caja:1,ig:'',fb:''});
  d.menu=Object.assign({},d.menu,{title:'DI PARMA',sub:{es:'Pizzería de masa madre',en:'Sourdough pizzeria'},footer:{es:'Di Parma Pizzería · demo de evaluación',en:'Di Parma Pizzeria · evaluation demo'},
   pitch:{es:'Masa madre de **48 a 72 h** de maduración en frío y horno a 450 °C.',en:'Sourdough fermented **48 to 72 h** and a 450 °C oven.'},promo:{on:true,es:'**10 % off** en tu primera visita como socio con **BIENVENIDA10**',en:'**10 % off** your first visit as a member with **BIENVENIDA10**'},mapQuery:'Balcarce 850, Salta',mapUrl:'',reviewUrl:'',social:[],wifi:{on:false,ssid:'',pass:'',example:false}});
  const keep=d.rubros.filter(r=>r.kind==='cobr'||r.kind==='shared'||r.kind==='sysgen');
