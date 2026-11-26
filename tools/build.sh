@@ -9,3 +9,4 @@ python3 tools/vb_gastro.py app.webmanifest
 python3 tools/vb_gastro.py club.webmanifest
 python3 tools/vb_gastro.py sw.js
 python3 tools/vb_rubros.py
+for f in index.html */index.html; do case "$f" in fuente/*|tools/*) continue;; esac; python3 tools/vb_guia.py gastronomia "$f" >/dev/null; done

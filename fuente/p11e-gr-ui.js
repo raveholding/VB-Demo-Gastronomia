@@ -63,3 +63,7 @@ if(isPizzaBuild()){const _ir=SCREENS.inicio&&SCREENS.inicio.render;if(_ir)SCREEN
 
 /* pantallas que no corresponden al rubro: fermentación sólo en la pizzería; sin salón ni mozo en la dark kitchen */
 if(isPizzaBuild()){if(!GRX.ferm&&SCREENS.dpferm)SCREENS.dpferm.show=()=>false;if(GRX.salon===false){['dpsalon','dpmozo'].forEach(k=>{if(SCREENS[k])SCREENS[k].show=()=>false;});}}
+/* Configuración → «Rubro del local»: el cliente elige su tipo de negocio y la demo se abre armada para ese rubro */
+if(isPizzaBuild()&&SCREENS.config&&SCREENS.config.render){const _cr=SCREENS.config.render;SCREENS.config.render=function(){const h=_cr.apply(this,arguments);try{if(!GRX.list)return h;
+ const card=`<div class="card gr-sw" id="gr-rubro" style="margin:.6rem 0 1rem"><h3 style="margin:0 0 .3rem">Tipo de negocio</h3><p class="sm mut" style="margin:0 0 .5rem">Elegí tu tipo de negocio: la demo se abre con su carta, sus fichas técnicas y sus pantallas. Los módulos se prenden o apagan más abajo.</p><div class="row" style="flex-wrap:wrap;gap:.4rem">${GRX.list.map(([k,n])=>k===GR_KEY?`<span class="btn sm gold" aria-current="true">${esc(n)}</span>`:`<a class="btn sm" href="${grUrl(k)}#panel/config">${esc(n)}</a>`).join('')}</div></div>`;
+ const i=h.indexOf('</h1>');return i<0?card+h:h.slice(0,i+5)+card+h.slice(i+5);}catch(e){return h;}};}
