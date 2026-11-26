@@ -85,12 +85,12 @@ function dpKit(f,k,bollo){const L=[];Object.entries(f).forEach(([i,q])=>{const i
  if(bollo)L.unshift({pid:'dp-bollo',qty:bollo});return L;}
 function dpCatalog(){const P=[];const ean=i=>typeof soloEan==='function'?soloEan(300+i):'';let n=0;
  DP_DISH.forEach(([id,cat,nm,desc,price,f,bol,art,o])=>{
-  P.push({id,name:nm,sub:o.sizes?'Grande · 8 porciones':'',grupo:'',rubro:cat,price:price*100,cost:0,stock:0,unit:'u',barcode:ean(n++),plu:'',menu:true,active:true,desc,featured:!!o.star,demo:true,kit:dpKit(f,1,bol),dp:{art,sizes:!!o.sizes,alc:!!o.alc,star:!!o.star},...(o.sizes?{fr:[{l:'Media',f:0.5,price:dpHalfPrice(price)*100}]}:{})});
-  if(o.sizes)P.push({id:id+'_i',name:nm,sub:'Individual · 4 porciones',grupo:'',rubro:cat,price:dpIndPrice(price)*100,cost:0,stock:0,unit:'u',barcode:ean(n++),plu:'',menu:false,active:true,desc,demo:true,kit:dpKit(f,DP_IND,bol*DP_INDB),dp:{art,of:id,ind:1}});});
+  P.push({id,name:nm,sub:o.sizes?GRX.sub.g:'',grupo:'',rubro:cat,price:price*100,cost:0,stock:0,unit:'u',barcode:ean(n++),plu:'',menu:true,active:true,desc,featured:!!o.star,demo:true,kit:dpKit(f,1,bol),dp:{art,sizes:!!o.sizes,alc:!!o.alc,star:!!o.star},...(o.sizes&&GRX.half?{fr:[{l:'Media',f:0.5,price:dpHalfPrice(price)*100}]}:{})});
+  if(o.sizes)P.push({id:id+'_i',name:nm,sub:GRX.sub.i,grupo:'',rubro:cat,price:dpIndPrice(price)*100,cost:0,stock:0,unit:'u',barcode:ean(n++),plu:'',menu:false,active:true,desc,demo:true,kit:dpKit(f,DP_IND,bol*DP_INDB),dp:{art,of:id,ind:1}});});
  DP_DRINK.forEach(([id,nm,price,cost,st,art,alc])=>P.push({id,name:nm,sub:'',grupo:'',rubro:'dp-beb',price:price*100,cost:cost*100,stock:st,unit:'u',barcode:ean(n++),plu:'',menu:true,active:true,desc:'',demo:true,dp:{art:{dish:art},alc:!!alc}}));
  DP_EXTRA.forEach(([id,nm,price,f])=>P.push({id,name:nm,sub:'adicional',grupo:'',rubro:'dp-adi',price:price*100,cost:0,stock:0,unit:'u',barcode:'',plu:'',menu:false,active:true,desc:'',demo:true,kit:dpKit(f,1,0),dp:{extra:1}}));
  /* masa madre e insumos: no se venden en la grilla de Vender (se descuentan por la ficha) */
- P.push({id:'dp-bollo',name:'Bollo de masa madre',sub:'260 g · 70 % hidratación',grupo:'',rubro:'dp-mas',price:120000,cost:Math.round(dpBolloCost()/100)*100,stock:64,unit:'u',barcode:'',plu:'',menu:false,active:true,desc:'',demo:true,posHide:true,dp:{bollo:1}});
+ if(GRX.ferm)P.push({id:'dp-bollo',name:'Bollo de masa madre',sub:'260 g · 70 % hidratación',grupo:'',rubro:'dp-mas',price:120000,cost:Math.round(dpBolloCost()/100)*100,stock:64,unit:'u',barcode:'',plu:'',menu:false,active:true,desc:'',demo:true,posHide:true,dp:{bollo:1}});
  DP_INS.forEach(([id,nm,u,c,pv,st,min])=>P.push({id:'in-'+id,name:nm,sub:'insumo',grupo:'',rubro:'dp-ins',price:Math.round(c*1.35)*100,cost:c*100,stock:st,unit:u,barcode:'',plu:'',menu:false,active:true,desc:'',demo:true,posHide:true,min,dp:{ins:id,pv}}));
  return P;}
 function dpBolloCost(){const fl=0.26/(1+0.70+0.028+0.2);return (fl*1600+fl*0.028*600)*100;} /* harina + sal por bollo (centavos) */

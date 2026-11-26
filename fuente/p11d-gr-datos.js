@@ -1,0 +1,292 @@
+/* ===== p11d · RUBROS GASTRONÓMICOS de la demo de Vincular Business =====
+   Una misma app para 8 tipos de negocio: restaurante, parrilla, cafetería, bar, pizzería, food truck, cadena (multisucursal)
+   y dark kitchen. Cada rubro se publica en su propia carpeta (tools/vb_rubros.py) con su nombre, logo y colores, y acá
+   cambia la carta, los insumos con su ficha técnica, los proveedores, los textos y qué pantallas se muestran.
+   Los platos usan los mismos «lugares» (ids) que la pizzería, así todo el circuito (mesa → caja → cocina → listo → servido,
+   delivery, PedidosYa, fichas, Club, ventas de ejemplo) funciona igual en todos los rubros. Datos inventados, de ejemplo. */
+const GR_KEY=(typeof window!=='undefined'&&window.VB_GR)||'pizzeria';
+const GR_D=(id,cat,nm,desc,price,f,art,o)=>[id,cat,nm,desc,price,f,0,{dish:art},o||{}];
+const GR_LIST=[['restaurante','Restaurante'],['parrilla','Parrilla y bodegón'],['cafeteria','Cafetería'],['bar','Bar y cervecería'],['pizzeria','Pizzería y delivery'],['foodtruck','Food truck y ferias'],['cadena','Cadena multisucursal'],['darkkitchen','Dark kitchen']];
+/* proveedores de ejemplo comunes (CUIT válidos de ejemplo se generan solos) */
+const GR_PROV=(a)=>a.map((x,i)=>['pv'+(i+1)].concat(x));
+const GR_ALL={
+ restaurante:{n:'Mi Restaurante',legal:'Mi Restaurante (demo de ejemplo)',slogan:'Cocina de autor y platos de siempre · Salta',title:'MI RESTAURANTE',sub:'Cocina de autor y platos de siempre',
+  pitch:'Cocina abierta, **producto de estación** y carta de vinos del norte.',hours:'Lun a dom · 12:00 a 15:30 y 20:00 a 00:30',mail:'mirestaurante',
+  cats:[['dp-piz','Principales','#b45309','Principales','grid'],['dp-ent','Entradas','#a16207','Entradas','grid'],['dp-czn','Sándwiches y minutas','#92400e','Minutas','grid'],['dp-pos','Postres','#9d174d','Postres','grid'],['dp-beb','Bebidas','#1d4ed8','Bebidas','grid'],['dp-adi','Guarniciones y extras','#4d7c0f','Extras','rows']],
+  ins:[['carne','Bife de chorizo','kg',18000,'pv1',14,6],['nalga','Nalga para milanesa','kg',11000,'pv1',9,4],['lomo','Lomo','kg',24000,'pv1',5,2],['pollo','Pechuga de pollo','kg',6500,'pv2',10,4],['salmon','Salmón rosado','kg',32000,'pv3',3,1.5],
+   ['harina_pasta','Pasta fresca','kg',6000,'pv4',8,3],['harina_pan','Pan de campo','kg',3200,'pv4',6,2],['harina_pr','Pan rallado','kg',2000,'pv5',5,2],['huevo','Huevo de campo','u',280,'pv2',90,30],['muzza','Queso muzzarella','kg',9000,'pv6',8,3],
+   ['parm','Queso parmesano','kg',28000,'pv6',2,0.8],['crema','Crema de leche','l',5200,'pv6',6,2],['provo','Provolone','kg',18000,'pv6',2.5,1],['salsa','Salsa de tomate casera','kg',3500,'pv5',8,3],['papa','Papa','kg',900,'pv7',40,15],
+   ['arroz','Arroz carnaroli','kg',5200,'pv5',5,2],['hongos','Hongos de pino','kg',14000,'pv7',2,0.8],['lechuga','Lechuga y verdes','kg',3000,'pv7',4,1.5],['tomate','Tomate','kg',2400,'pv7',8,3],['cebolla','Cebolla','kg',1100,'pv7',10,4],
+   ['limon','Limón','u',260,'pv7',60,20],['oliva','Aceite de oliva','l',14000,'pv5',5,2],['vino','Malbec de Cafayate (botella)','u',6000,'pv8',24,10],['ddl','Dulce de leche','kg',6000,'pv6',4,1.5],['choco','Chocolate semiamargo','kg',15000,'pv5',2,0.8]],
+  prov:GR_PROV([['Frigorífico del Valle','Carnes','387 421-1100','ventas@frigovalle.example',24600000],['Granja Las Lomas','Pollos y huevos','387 431-2200','pedidos@laslomas.example',0],['Pescadería del Norte','Pescados','387 433-6600','hola@pescanorte.example',0],
+   ['Pastas La Nonna','Pastas y panes','387 415-3300','pedidos@lanonna.example',8900000],['Almacén Gourmet del Norte','Secos y aceites','387 422-4400','hola@gourmetnorte.example',0],['Lácteos La Quebrada','Quesos y lácteos','387 431-2201','pedidos@laquebrada.example',0],
+   ['Mercado San Miguel · Puesto 14','Verdulería','387 415-3301','puesto14@mercado.example',3120000],['Bodega Cafayate','Vinos','3868 42-1300','ventas@bodegacafayate.example',0]]),
+  dish:[GR_D('p_dip','dp-piz','Bife de chorizo con papas','400 g a la parrilla, papas rústicas y chimichurri de la casa.',21900,{carne:400,papa:250,oliva:10},'bife',{sizes:1,star:1}),
+   GR_D('p_marg','dp-piz','Milanesa napolitana','De nalga, con salsa, jamón y muzzarella gratinada. Con papas fritas.',17900,{nalga:240,harina_pr:60,huevo:1,salsa:60,muzza:80,papa:220},'milanesa',{sizes:1}),
+   GR_D('p_nap','dp-piz','Sorrentinos de jamón y queso','Pasta fresca rellena con salsa fileto o crema.',15900,{harina_pasta:260,salsa:120,parm:15},'pasta',{sizes:1}),
+   GR_D('p_fug','dp-piz','Ñoquis de papa','Caseros, con salsa bolognesa o mixta.',13500,{papa:260,harina_pasta:60,salsa:130,parm:10},'pasta',{sizes:1}),
+   GR_D('p_cal','dp-piz','Risotto de hongos','Arroz carnaroli, hongos de pino, crema y parmesano.',16800,{arroz:110,hongos:120,crema:60,parm:20},'risotto',{sizes:1}),
+   GR_D('p_4q','dp-piz','Pollo al limón con verduras','Pechuga grillada, salsa de limón y verduras salteadas.',15400,{pollo:300,limon:1,oliva:10,cebolla:60},'pollo',{sizes:1}),
+   GR_D('p_dia','dp-piz','Salmón grillado','Con verdes de estación y limón.',26500,{salmon:220,lechuga:50,limon:1,oliva:10},'pescado',{sizes:1}),
+   GR_D('p_hon','dp-piz','Lomo al malbec','Medallón de lomo con reducción de malbec y papas.',24900,{lomo:280,vino:0.15,cebolla:60,papa:150},'bife',{sizes:1}),
+   GR_D('p_sal','dp-piz','Ravioles de verdura','Pasta fresca rellena, salsa a elección.',14200,{harina_pasta:240,crema:80,parm:15},'pasta',{sizes:1}),
+   GR_D('p_ort','dp-piz','Ensalada César','Verdes, pollo grillado, croutons y parmesano.',12900,{lechuga:150,pollo:120,parm:20,harina_pan:30},'ensalada',{sizes:1}),
+   GR_D('e_foc','dp-ent','Empanadas salteñas (3)','De carne cortada a cuchillo, al horno de barro.',6900,{carne:150,harina_pasta:120,papa:60,huevo:1},'empanadas'),
+   GR_D('e_fai','dp-ent','Provoleta','Provolone a la plancha con orégano y oliva.',8900,{provo:180,oliva:10},'provoleta'),
+   GR_D('e_bur','dp-ent','Bruschettas (4)','Pan de campo, tomate, albahaca y oliva.',7400,{harina_pan:120,tomate:120,oliva:15},'bruschetta'),
+   GR_D('c_nap','dp-czn','Lomito completo','Lomo, jamón, queso, huevo, lechuga y tomate. Con papas.',15900,{lomo:180,harina_pan:150,huevo:1,muzza:40,lechuga:20,tomate:40,papa:150},'sandwich'),
+   GR_D('d_tir','dp-pos','Flan casero','Con dulce de leche y crema.',6200,{huevo:2,ddl:50,crema:20},'flan'),
+   GR_D('d_nut','dp-pos','Volcán de chocolate','Con helado de crema americana.',8400,{choco:80,huevo:1,harina_pr:20},'volcan'),
+   GR_D('b_vin','dp-beb','Copa de Malbec','Malbec de Cafayate.',6000,{vino:0.2},'vino',{alc:1}),
+   GR_D('b_lim','dp-beb','Limonada con menta','Jarra individual.',4500,{limon:1},'limonada')],
+  drink:[['b_cer','Cerveza 473 ml',5200,2300,46,'cerveza',1],['b_gas','Gaseosa 500 ml',3200,950,60,'gaseosa',0],['b_agu','Agua 500 ml',2500,560,52,'agua',0]],
+  extra:[['x_muz','Papas fritas',4500,{papa:250,oliva:20}],['x_cru','Puré de papas',3900,{papa:200,crema:40}],['x_hue','Huevo frito',1500,{huevo:1}],['x_ruc','Ensalada mixta',3800,{lechuga:80,tomate:80,cebolla:30}],
+   ['x_ace','Salsa extra',1200,{salsa:60}],['x_bur','Queso gratinado',2500,{muzza:60}],['x_aji','Pan de la casa',1500,{harina_pan:80}],['x_sal','Porción extra de carne',6500,{carne:150}]],
+  sizes:{g:'Plato completo',i:'Media porción'},sub:{g:'Plato completo',i:'Media porción'},
+  coupon:['MARTESCHEF','15 % los martes en platos principales (compra mínima $ 20.000)'],plan:['Socio Mi Restaurante Plus','5 % en todas las visitas y un postre de regalo por mes (ejemplo)'],reward:'Un plato principal de regalo',
+  ticket:'¡Gracias por elegir Mi Restaurante! Te esperamos pronto.',note:'Le gusta el bife jugoso; mesa cerca de la ventana',
+  cocina:['Jefe de cocina','Cocina · producción','Ayudante de cocina'],puesto:'Cocina',tasks:['Revisar la mise en place y las fechas de los insumos','Controlar la temperatura de cámaras y heladeras','Limpieza profunda de la cocina'],
+  pick:'cerveza, gaseosa, agua, vino, limonada, postre, pan, salsa, servilleta, bandeja térmica',
+  proc:{'dp-piz':['Preparar la mise en place del plato.','Cocinar al punto pedido por el cliente.','Emplatar con la guarnición y pasar a salón.'],'dp-ent':['Preparar y emplatar.'],'dp-czn':['Armar el sándwich y acompañar con papas.'],'dp-pos':['Porcionar y emplatar.'],'dp-beb':['Servir frío.']}},
+
+ parrilla:{n:'Mi Parrilla',legal:'Mi Parrilla (demo de ejemplo)',slogan:'Parrilla y bodegón · Salta',title:'MI PARRILLA',sub:'Parrilla y bodegón',
+  pitch:'Carnes a la leña, **cortes de novillo** y porciones abundantes.',hours:'Lun a dom · 12:00 a 16:00 y 20:00 a 01:00',mail:'miparrilla',
+  cats:[['dp-piz','A la parrilla','#b91c1c','Parrilla','grid'],['dp-ent','Para empezar','#a16207','Entradas','grid'],['dp-czn','Minutas','#92400e','Minutas','grid'],['dp-pos','Postres','#9d174d','Postres','grid'],['dp-beb','Bebidas','#1d4ed8','Bebidas','grid'],['dp-adi','Guarniciones','#4d7c0f','Guarniciones','rows']],
+  ins:[['carne','Bife de chorizo','kg',18000,'pv1',16,6],['vacio','Vacío','kg',14500,'pv1',12,5],['tira','Asado de tira','kg',13000,'pv1',14,6],['entrana','Entraña','kg',22000,'pv1',5,2],['matambre','Matambre de cerdo','kg',11000,'pv1',6,2],
+   ['mollejas','Mollejas','kg',19000,'pv1',3,1.2],['cerdo','Costillas de cerdo','kg',9800,'pv1',8,3],['pollo','Pollo deshuesado','kg',6000,'pv2',10,4],['chorizo','Chorizo puro cerdo','u',1400,'pv1',60,25],['morcilla','Morcilla','u',1100,'pv1',40,15],
+   ['nalga','Nalga para milanesa','kg',11000,'pv1',6,2.5],['provo','Provoleta','kg',18000,'pv3',3,1.2],['harina_pan','Pan francés','kg',2600,'pv4',8,3],['harina_pr','Pan rallado','kg',2000,'pv4',4,1.5],['harina_masa','Tapas de empanada','u',150,'pv4',120,40],
+   ['huevo','Huevo','u',280,'pv2',90,30],['papa','Papa','kg',900,'pv5',50,20],['lechuga','Lechuga','kg',3000,'pv5',4,1.5],['tomate','Tomate','kg',2400,'pv5',8,3],['cebolla','Cebolla','kg',1100,'pv5',10,4],
+   ['chimi','Chimichurri de la casa','l',6000,'pv6',4,1.5],['carbon','Carbón y leña','kg',600,'pv7',120,40],['vino','Malbec (botella)','u',6000,'pv8',30,10],['ddl','Dulce de leche','kg',6000,'pv3',4,1.5],['limon','Limón','u',260,'pv5',50,20]],
+  prov:GR_PROV([['Frigorífico del Valle','Carnes','387 421-1100','ventas@frigovalle.example',31800000],['Granja Las Lomas','Pollos y huevos','387 431-2200','pedidos@laslomas.example',0],['Lácteos La Quebrada','Quesos','387 431-2201','pedidos@laquebrada.example',0],
+   ['Panadería El Molino','Panes y tapas','387 415-3300','pedidos@elmolino.example',2100000],['Mercado San Miguel · Puesto 14','Verdulería','387 415-3301','puesto14@mercado.example',0],['Almacén Gourmet del Norte','Salsas y secos','387 422-4400','hola@gourmetnorte.example',0],
+   ['Carbonera Los Cerrillos','Carbón y leña','387 490-5500','ventas@carbonera.example',0],['Bodega Cafayate','Vinos','3868 42-1300','ventas@bodegacafayate.example',9600000]]),
+  dish:[GR_D('p_dip','dp-piz','Bife de chorizo','400 g de novillo, a la leña, con chimichurri.',24500,{carne:400,chimi:20,carbon:300},'bife',{sizes:1,star:1}),
+   GR_D('p_marg','dp-piz','Vacío','Tierno y jugoso, 400 g.',21900,{vacio:400,chimi:20,carbon:300},'asado',{sizes:1}),
+   GR_D('p_nap','dp-piz','Asado de tira','Banderita de novillo, 450 g.',22900,{tira:450,chimi:20,carbon:300},'asado',{sizes:1}),
+   GR_D('p_fug','dp-piz','Entraña','La preferida de la casa, 350 g.',25900,{entrana:350,chimi:20,carbon:300},'bife',{sizes:1}),
+   GR_D('p_cal','dp-piz','Matambre a la pizza','Matambre de cerdo con salsa y provoleta.',19900,{matambre:350,provo:60,tomate:60,carbon:300},'asado',{sizes:1}),
+   GR_D('p_4q','dp-piz','Parrillada para 2','Asado, vacío, chorizo, morcilla y pollo.',46900,{tira:300,vacio:250,chorizo:2,morcilla:2,pollo:250,carbon:600},'parrillada',{sizes:1}),
+   GR_D('p_dia','dp-piz','Pollo deshuesado','Medio pollo a la parrilla con limón.',15900,{pollo:450,limon:1,carbon:300},'pollo',{sizes:1}),
+   GR_D('p_hon','dp-piz','Ojo de bife','Corte grueso, 400 g.',27900,{carne:420,chimi:20,carbon:300},'bife',{sizes:1}),
+   GR_D('p_sal','dp-piz','Mollejas al limón','Crocantes por fuera, tiernas por dentro.',21500,{mollejas:300,limon:1,carbon:300},'asado',{sizes:1}),
+   GR_D('p_ort','dp-piz','Costillas de cerdo','Con salsa barbacoa casera.',18900,{cerdo:450,carbon:300},'asado',{sizes:1}),
+   GR_D('e_foc','dp-ent','Provoleta','A la parrilla con orégano y ají.',9500,{provo:180,carbon:100},'provoleta'),
+   GR_D('e_fai','dp-ent','Empanadas de carne (3)','Fritas o al horno, cortadas a cuchillo.',6900,{harina_masa:3,carne:150,cebolla:60,huevo:1},'empanadas'),
+   GR_D('e_bur','dp-ent','Choripán','Chorizo puro cerdo con chimichurri y criolla.',6500,{chorizo:1,harina_pan:100,chimi:20,carbon:100},'chori'),
+   GR_D('c_nap','dp-czn','Milanesa con papas','De nalga, con papas fritas.',16500,{nalga:250,harina_pr:60,huevo:1,papa:250},'milanesa'),
+   GR_D('d_tir','dp-pos','Flan mixto','Con dulce de leche y crema.',6400,{huevo:2,ddl:60},'flan'),
+   GR_D('d_nut','dp-pos','Panqueque con dulce de leche','Caramelizado al momento.',6200,{huevo:1,ddl:80,harina_pr:20},'panqueque'),
+   GR_D('b_vin','dp-beb','Copa de Malbec','Malbec de la casa.',5800,{vino:0.2},'vino',{alc:1}),
+   GR_D('b_lim','dp-beb','Limonada','Jarra individual con menta.',4500,{limon:1},'limonada')],
+  drink:[['b_cer','Cerveza 1 litro',7900,3600,40,'cerveza',1],['b_gas','Gaseosa 1,5 litros',5200,1800,40,'gaseosa',0],['b_agu','Agua 500 ml',2500,560,52,'agua',0]],
+  extra:[['x_muz','Papas fritas',4800,{papa:300}],['x_cru','Ensalada mixta',3900,{lechuga:80,tomate:80,cebolla:40}],['x_hue','Huevo frito',1500,{huevo:1}],['x_ruc','Papas a la provenzal',5200,{papa:300}],
+   ['x_ace','Chimichurri extra',800,{chimi:30}],['x_bur','Provoleta extra',4500,{provo:90}],['x_aji','Pan de la casa',1500,{harina_pan:100}],['x_sal','Chorizo extra',3200,{chorizo:1}]],
+  sizes:{g:'Porción completa',i:'Media porción'},sub:{g:'Porción completa',i:'Media porción'},
+  coupon:['MIERCOLESASADO','15 % los miércoles en cortes a la parrilla (compra mínima $ 30.000)'],plan:['Socio Mi Parrilla Plus','5 % en todas las visitas y una provoleta de regalo por mes (ejemplo)'],reward:'Un bife de chorizo de regalo',
+  ticket:'¡Gracias por elegir Mi Parrilla! Volvé cuando quieras.',note:'Pide el bife a punto; mesa grande los domingos',
+  cocina:['Parrillero','Cocina · minutas','Ayudante de parrilla'],puesto:'Parrilla y cocina',tasks:['Prender el fuego y preparar las brasas','Controlar la temperatura de la cámara de carnes','Limpieza profunda de la parrilla'],
+  pick:'cerveza, gaseosa, agua, vino, limonada, postre, pan, chimichurri, servilleta, bandeja térmica',
+  proc:{'dp-piz':['Salar el corte y llevar a brasa fuerte.','Dar vuelta una sola vez y cocinar al punto pedido.','Reposar 2 minutos y servir con chimichurri.'],'dp-ent':['Preparar a la parrilla o al horno.'],'dp-czn':['Freír y servir con la guarnición.'],'dp-pos':['Porcionar y emplatar.'],'dp-beb':['Servir frío.']}},
+
+ cafeteria:{n:'Mi Café',legal:'Mi Café (demo de ejemplo)',slogan:'Café de especialidad y panadería · Salta',title:'MI CAFÉ',sub:'Café de especialidad y panadería',
+  pitch:'Granos de **tostado propio**, leche fresca y panadería del día.',hours:'Lun a sáb · 7:30 a 21:00',mail:'micafe',
+  cats:[['dp-piz','Cafetería','#78350f','Café','grid'],['dp-ent','Panadería','#a16207','Panadería','grid'],['dp-czn','Brunch','#92400e','Brunch','grid'],['dp-pos','Pastelería','#9d174d','Pastelería','grid'],['dp-beb','Jugos y bebidas','#1d4ed8','Bebidas','grid'],['dp-adi','Extras','#4d7c0f','Extras','rows']],
+  ins:[['cafe','Café de especialidad en grano','kg',28000,'pv1',6,2],['leche','Leche entera','l',1400,'pv2',40,15],['leche_veg','Leche de almendras','l',4800,'pv2',8,3],['crema','Crema de leche','l',5200,'pv2',4,1.5],['cacao','Cacao amargo','kg',14000,'pv3',2,0.8],
+   ['te','Té en hebras','kg',30000,'pv3',1.2,0.4],['azucar','Azúcar','kg',1500,'pv3',8,3],['harina_med','Medialuna de manteca','u',450,'pv4',90,30],['harina_pan','Pan de molde de masa madre','kg',4200,'pv4',6,2],['muzza','Queso tybo','kg',9000,'pv2',4,1.5],
+   ['jamon','Jamón cocido','kg',12000,'pv5',3,1.2],['palta','Palta','kg',7000,'pv6',4,1.5],['huevo','Huevo de campo','u',280,'pv6',60,20],['quesocrema','Queso crema','kg',9000,'pv2',3,1],['frutas','Frutos rojos','kg',9000,'pv6',3,1],
+   ['naranja','Naranja para exprimir','kg',1500,'pv6',20,8],['limon','Limón','u',260,'pv6',40,15],['hielo','Hielo','kg',500,'pv7',30,10],['ddl','Dulce de leche','kg',6000,'pv2',3,1],['manteca','Manteca','kg',9000,'pv2',3,1]],
+  prov:GR_PROV([['Tostadores del Norte','Café','387 421-1100','ventas@tostadores.example',8400000],['Lácteos La Quebrada','Leches y quesos','387 431-2200','pedidos@laquebrada.example',0],['Almacén Gourmet del Norte','Secos, tés y cacao','387 422-4400','hola@gourmetnorte.example',0],
+   ['Panadería El Molino','Panadería','387 415-3300','pedidos@elmolino.example',2650000],['Fiambres de Cafayate','Fiambres','3868 42-1300','fiambres@cafayate.example',0],['Mercado San Miguel · Puesto 14','Frutas y verduras','387 415-3301','puesto14@mercado.example',0],
+   ['Hielo Salta','Hielo','387 490-5500','pedidos@hielosalta.example',0],['Distribuidora Norte Bebidas','Gaseosas y aguas','387 424-7700','pedidos@nortebebidas.example',0]]),
+  dish:[GR_D('p_dip','dp-piz','Flat white','Doble ristretto con leche texturizada.',3800,{cafe:18,leche:150},'latte',{sizes:1,star:1}),
+   GR_D('p_marg','dp-piz','Espresso','Blend de la casa, tostado propio.',2600,{cafe:9},'espresso',{sizes:1}),
+   GR_D('p_nap','dp-piz','Cortado','Espresso con un toque de leche.',2900,{cafe:9,leche:40},'espresso',{sizes:1}),
+   GR_D('p_fug','dp-piz','Café con leche','Espresso y leche caliente.',3300,{cafe:9,leche:180},'latte',{sizes:1}),
+   GR_D('p_cal','dp-piz','Capuccino','Con espuma de leche y cacao.',3600,{cafe:9,leche:150,cacao:3},'latte',{sizes:1}),
+   GR_D('p_4q','dp-piz','Latte','Suave, con mucha leche.',3600,{cafe:9,leche:220},'latte',{sizes:1}),
+   GR_D('p_dia','dp-piz','Mocca','Espresso, chocolate y leche.',4200,{cafe:9,leche:150,cacao:15},'latte',{sizes:1}),
+   GR_D('p_hon','dp-piz','Té en hebras','Negro, verde o frutal.',2900,{te:4},'te',{sizes:1}),
+   GR_D('p_sal','dp-piz','Chocolate caliente','Con cacao amargo y leche entera.',4200,{leche:220,cacao:25,azucar:15},'latte',{sizes:1}),
+   GR_D('p_ort','dp-piz','Cold brew','Infusión en frío 16 h, con hielo.',4400,{cafe:20,hielo:150},'coldbrew',{sizes:1}),
+   GR_D('e_foc','dp-ent','Medialunas (3)','De manteca, recién horneadas.',3900,{harina_med:3},'medialunas'),
+   GR_D('e_fai','dp-ent','Tostado de jamón y queso','En pan de molde de masa madre.',6900,{harina_pan:120,jamon:50,muzza:60,manteca:10},'tostado'),
+   GR_D('e_bur','dp-ent','Tostadas con manteca y mermelada','Pan de masa madre.',4200,{harina_pan:100,manteca:15},'tostado'),
+   GR_D('c_nap','dp-czn','Avocado toast con huevo','Palta, huevo poché y semillas.',8900,{harina_pan:100,palta:80,huevo:1},'avotoast'),
+   GR_D('d_tir','dp-pos','Cheesecake de frutos rojos','Porción individual.',6500,{quesocrema:120,frutas:40,harina_pan:20},'torta'),
+   GR_D('d_nut','dp-pos','Budín de limón','Húmedo, con glaseado.',3900,{harina_pan:60,huevo:1,limon:1,azucar:30},'budin'),
+   GR_D('b_vin','dp-beb','Licuado de frutas','Con leche o agua.',5200,{frutas:150,leche:150},'licuado'),
+   GR_D('b_lim','dp-beb','Jugo de naranja exprimido','Natural, sin azúcar.',4200,{naranja:400},'jugo')],
+  drink:[['b_cer','Agua con gas 500 ml',2800,620,40,'agua',0],['b_gas','Gaseosa 500 ml',3200,950,50,'gaseosa',0],['b_agu','Agua 500 ml',2500,560,52,'agua',0]],
+  extra:[['x_muz','Shot extra de café',900,{cafe:9}],['x_cru','Leche de almendras',900,{leche_veg:150}],['x_hue','Huevo',1200,{huevo:1}],['x_ruc','Palta',1800,{palta:50}],
+   ['x_ace','Crema batida',800,{crema:30}],['x_bur','Medialuna extra',1300,{harina_med:1}],['x_aji','Dulce de leche',700,{ddl:25}],['x_sal','Jamón y queso extra',1900,{jamon:30,muzza:30}]],
+  sizes:{g:'Grande',i:'Chico'},sub:{g:'Grande',i:'Chico'},
+  coupon:['DESAYUNO15','15 % en desayunos de 8 a 10 h (compra mínima $ 8.000)'],plan:['Socio Mi Café Plus','5 % en todas las visitas y un café de regalo por semana (ejemplo)'],reward:'Un café con medialunas de regalo',
+  ticket:'¡Gracias por elegir Mi Café! Tu próximo café te espera.',note:'Toma flat white con leche de almendras',
+  cocina:['Barista','Pastelería','Ayudante de barra'],puesto:'Barra y pastelería',tasks:['Calibrar el molino y la máquina de espresso','Controlar la temperatura de la heladera de lácteos','Limpieza profunda de la máquina de café'],
+  pick:'agua, gaseosa, jugo, licuado, medialunas, pastelería, azúcar, servilleta, porta vasos',
+  proc:{'dp-piz':['Moler al momento y extraer el espresso (25 a 30 s).','Texturizar la leche a 60 °C.','Servir con arte latte.'],'dp-ent':['Calentar y servir.'],'dp-czn':['Tostar el pan y armar el plato.'],'dp-pos':['Porcionar y servir.'],'dp-beb':['Preparar al momento.']}},
+
+ bar:{n:'Mi Bar',legal:'Mi Bar (demo de ejemplo)',slogan:'Bar de tragos y cervecería · Salta',title:'MI BAR',sub:'Bar de tragos y cervecería',
+  pitch:'Tragos de autor, **cerveza tirada** y algo rico para picar.',hours:'Mar a dom · 19:00 a 03:00',mail:'mibar',
+  cats:[['dp-piz','Tragos','#7c3aed','Tragos','grid'],['dp-ent','Para picar','#a16207','Para picar','grid'],['dp-czn','Burgers','#92400e','Burgers','grid'],['dp-pos','Postres','#9d174d','Postres','grid'],['dp-beb','Cervezas y sin alcohol','#1d4ed8','Bebidas','grid'],['dp-adi','Extras','#4d7c0f','Extras','rows']],
+  ins:[['fernet','Fernet','l',14000,'pv1',9,3],['gin','Gin','l',22000,'pv1',6,2],['campari','Campari','l',16000,'pv1',4,1.5],['vermut','Vermut rosso','l',9000,'pv1',4,1.5],['aperol','Aperol','l',18000,'pv1',4,1.5],
+   ['espumante','Espumante','l',8000,'pv2',8,3],['ron','Ron blanco','l',15000,'pv1',5,2],['vodka','Vodka','l',12000,'pv1',5,2],['whisky','Whisky','l',30000,'pv1',3,1],['coca','Gaseosa cola','l',1500,'pv3',40,15],
+   ['tonica','Agua tónica','l',2500,'pv3',24,8],['limon','Limón','u',260,'pv4',80,30],['menta','Menta fresca','kg',12000,'pv4',0.8,0.3],['azucar','Azúcar','kg',1500,'pv5',6,2],['hielo','Hielo','kg',500,'pv6',80,30],
+   ['naranja','Naranja','kg',1500,'pv4',12,4],['frutas','Frutillas','kg',7000,'pv4',3,1],['papa','Papa','kg',900,'pv4',30,10],['cheddar','Cheddar','kg',14000,'pv7',4,1.5],['panceta','Panceta ahumada','kg',16000,'pv8',3,1],
+   ['carne','Medallón de carne','kg',12000,'pv8',8,3],['harina_pan','Pan de papa','kg',3800,'pv5',6,2],['nachos','Nachos de maíz','kg',9000,'pv5',4,1.5],['salame','Salame y fiambres','kg',18000,'pv8',3,1],['muzza','Quesos para picada','kg',12000,'pv7',3,1],
+   ['vino','Vino de la casa (botella)','u',5000,'pv2',24,8],['choco','Chocolate','kg',15000,'pv5',2,0.8],['helado','Helado de crema','kg',9000,'pv7',4,1.5]],
+  prov:GR_PROV([['Distribuidora de Bebidas Spirits','Bebidas blancas y aperitivos','387 421-1100','ventas@spirits.example',18400000],['Bodega Cafayate','Vinos y espumantes','3868 42-1300','ventas@bodegacafayate.example',0],['Distribuidora Norte Bebidas','Gaseosas y tónicas','387 424-7700','pedidos@nortebebidas.example',0],
+   ['Mercado San Miguel · Puesto 14','Frutas y verduras','387 415-3301','puesto14@mercado.example',0],['Almacén Gourmet del Norte','Secos y panificados','387 422-4400','hola@gourmetnorte.example',0],['Hielo Salta','Hielo','387 490-5500','pedidos@hielosalta.example',0],
+   ['Lácteos La Quebrada','Quesos y helados','387 431-2200','pedidos@laquebrada.example',0],['Fiambres de Cafayate','Carnes y fiambres','3868 42-1301','fiambres@cafayate.example',4200000]]),
+  dish:[GR_D('p_dip','dp-piz','Fernet con coca','El clásico del norte, bien cargado.',6500,{fernet:70,coca:200,hielo:150},'fernet',{sizes:1,star:1,alc:1}),
+   GR_D('p_marg','dp-piz','Gin tonic','Gin, tónica, limón y pepino.',8900,{gin:60,tonica:200,limon:0.25,hielo:150},'trago',{sizes:1,alc:1}),
+   GR_D('p_nap','dp-piz','Negroni','Gin, Campari y vermut rosso.',9500,{gin:30,campari:30,vermut:30,hielo:100},'trago',{sizes:1,alc:1}),
+   GR_D('p_fug','dp-piz','Aperol spritz','Aperol, espumante y soda.',9200,{aperol:60,espumante:90,naranja:30,hielo:150},'spritz',{sizes:1,alc:1}),
+   GR_D('p_cal','dp-piz','Mojito','Ron, menta, lima y azúcar.',8500,{ron:60,menta:8,limon:0.5,azucar:15,hielo:150},'trago',{sizes:1,alc:1}),
+   GR_D('p_4q','dp-piz','Caipiroska de frutilla','Vodka y frutillas frescas.',7900,{vodka:60,frutas:60,azucar:20,hielo:150},'trago',{sizes:1,alc:1}),
+   GR_D('p_dia','dp-piz','Cuba libre','Ron, cola y limón.',7400,{ron:50,coca:150,limon:0.25,hielo:150},'fernet',{sizes:1,alc:1}),
+   GR_D('p_hon','dp-piz','Old fashioned','Whisky, azúcar, amargo y naranja.',10500,{whisky:60,azucar:5,naranja:20,hielo:100},'trago',{sizes:1,alc:1}),
+   GR_D('p_sal','dp-piz','Campari con naranja','Con jugo exprimido.',7600,{campari:50,naranja:250,hielo:150},'spritz',{sizes:1,alc:1}),
+   GR_D('p_ort','dp-piz','Daiquiri de frutilla','Ron, frutillas y lima, frozen.',8400,{ron:50,frutas:80,limon:0.5,hielo:150},'spritz',{sizes:1,alc:1}),
+   GR_D('e_foc','dp-ent','Papas con cheddar y panceta','Para compartir.',8900,{papa:300,cheddar:60,panceta:40},'papas'),
+   GR_D('e_fai','dp-ent','Picada para 2','Fiambres, quesos y pan.',16900,{salame:120,muzza:150,harina_pan:100},'picada'),
+   GR_D('e_bur','dp-ent','Nachos con cheddar','Con guacamole y pico de gallo.',7900,{nachos:150,cheddar:70},'nachos'),
+   GR_D('c_nap','dp-czn','Burger doble con cheddar','Doble medallón, cheddar, panceta y papas.',13900,{carne:240,harina_pan:90,cheddar:40,panceta:30,papa:150},'burger'),
+   GR_D('d_tir','dp-pos','Brownie con helado','Tibio, con helado de crema.',6900,{choco:60,helado:80},'brownie'),
+   GR_D('d_nut','dp-pos','Copa de helado','Tres sabores.',5900,{helado:200},'helado'),
+   GR_D('b_vin','dp-beb','Copa de vino','Tinto o blanco de la casa.',5500,{vino:0.2},'vino',{alc:1}),
+   GR_D('b_lim','dp-beb','Limonada','Con menta y jengibre.',4500,{limon:1,menta:5},'limonada')],
+  drink:[['b_cer','Pinta de cerveza rubia',5900,2100,160,'cerveza',1],['b_gas','Gaseosa 500 ml',3200,950,60,'gaseosa',0],['b_agu','Agua 500 ml',2500,560,52,'agua',0]],
+  extra:[['x_muz','Medida extra',3500,{gin:30}],['x_cru','Panceta extra',2200,{panceta:30}],['x_hue','Huevo frito',1500,{}],['x_ruc','Cheddar extra',1800,{cheddar:30}],
+   ['x_ace','Papas extra',3500,{papa:200}],['x_bur','Medallón extra',4500,{carne:120}],['x_aji','Salsa picante',500,{}],['x_sal','Hielo extra',300,{hielo:100}]],
+  sizes:{g:'Doble',i:'Simple'},sub:{g:'Doble',i:'Simple'},
+  coupon:['HAPPYHOUR','2x1 en tragos de 19 a 21 h (compra mínima $ 15.000)'],plan:['Socio Mi Bar Plus','5 % en todas las visitas y un trago de regalo por mes (ejemplo)'],reward:'Un trago de autor de regalo',
+  ticket:'¡Gracias por elegir Mi Bar! Tomá con moderación.',note:'Pide el fernet bien cargado; viene los viernes',
+  cocina:['Bartender','Cocina · picadas y burgers','Barback'],puesto:'Barra y cocina',tasks:['Armar la barra: hielo, cítricos y garnish','Controlar el stock de bebidas por medida','Limpieza profunda de la barra y las canillas'],
+  pick:'cerveza, gaseosa, agua, vino, hielo, servilleta, sorbete, vaso descartable',
+  proc:{'dp-piz':['Enfriar el vaso con hielo.','Medir cada bebida con jigger (la ficha descuenta por medida).','Completar y decorar.'],'dp-ent':['Preparar y emplatar para compartir.'],'dp-czn':['Cocinar el medallón y armar la burger.'],'dp-pos':['Porcionar y servir.'],'dp-beb':['Tirar la pinta o servir frío.']}},
+
+ foodtruck:{n:'Mi Food Truck',legal:'Mi Food Truck (demo de ejemplo)',slogan:'Comida callejera en ferias y eventos · Salta',title:'MI FOOD TRUCK',sub:'Comida callejera en ferias y eventos',
+  pitch:'Cocina sobre ruedas: **pedí desde el QR** y te avisamos cuando está listo.',hours:'Vie a dom · 19:00 a 01:00 (según la feria)',mail:'mifoodtruck',
+  cats:[['dp-piz','Burgers y sándwiches','#ca8a04','Burgers','grid'],['dp-ent','Papas y para compartir','#a16207','Papas','grid'],['dp-czn','Combos','#92400e','Combos','grid'],['dp-pos','Dulces','#9d174d','Dulces','grid'],['dp-beb','Bebidas','#1d4ed8','Bebidas','grid'],['dp-adi','Extras','#4d7c0f','Extras','rows']],
+  ins:[['carne','Medallón de carne','kg',12000,'pv1',10,4],['veggie','Medallón veggie','kg',9000,'pv1',3,1],['cerdo','Bondiola desmechada','kg',11000,'pv1',4,1.5],['lomo','Lomo','kg',24000,'pv1',3,1.2],['pollo','Pollo','kg',6500,'pv1',5,2],
+   ['chorizo','Chorizo','u',1400,'pv1',40,15],['salchicha','Salchicha alemana','u',700,'pv1',50,20],['harina_pan','Pan de papa','kg',3800,'pv2',8,3],['harina_tort','Tortillas de trigo','u',250,'pv2',60,20],['cheddar','Cheddar','kg',14000,'pv3',4,1.5],
+   ['panceta','Panceta ahumada','kg',16000,'pv1',3,1],['lechuga','Lechuga','kg',3000,'pv4',3,1],['tomate','Tomate','kg',2400,'pv4',5,2],['cebolla','Cebolla','kg',1100,'pv4',8,3],['palta','Palta','kg',7000,'pv4',3,1],
+   ['papa','Papa bastón congelada','kg',2600,'pv5',30,10],['salsas','Salsas de la casa','l',5000,'pv6',6,2],['aceite','Aceite para freír','l',3500,'pv6',20,8],['harina','Harina','kg',1600,'pv6',10,4],['huevo','Huevo','u',280,'pv4',60,20],
+   ['ddl','Dulce de leche','kg',6000,'pv3',3,1],['choco','Chocolate','kg',15000,'pv6',2,0.8],['naranja','Naranja','kg',1500,'pv4',10,4],['limon','Limón','u',260,'pv4',40,15]],
+  prov:GR_PROV([['Frigorífico del Valle','Carnes','387 421-1100','ventas@frigovalle.example',6400000],['Panadería El Molino','Panes y tortillas','387 415-3300','pedidos@elmolino.example',0],['Lácteos La Quebrada','Quesos','387 431-2200','pedidos@laquebrada.example',0],
+   ['Mercado San Miguel · Puesto 14','Verdulería','387 415-3301','puesto14@mercado.example',0],['Congelados del Norte','Papas congeladas','387 433-6600','ventas@congeladosnorte.example',2300000],['Almacén Gourmet del Norte','Salsas, aceite y secos','387 422-4400','hola@gourmetnorte.example',0],
+   ['Gas Envasado Salta','Garrafas','387 490-5500','pedidos@gassalta.example',0],['Distribuidora Norte Bebidas','Bebidas','387 424-7700','pedidos@nortebebidas.example',0]]),
+  dish:[GR_D('p_dip','dp-piz','Burger de la casa','Doble medallón, cheddar, panceta y salsa de la casa.',11900,{carne:240,harina_pan:90,cheddar:40,panceta:30,salsas:20},'burger',{sizes:1,star:1}),
+   GR_D('p_marg','dp-piz','Cheeseburger','Medallón, cheddar, pepinos y mostaza.',9900,{carne:120,harina_pan:90,cheddar:30,salsas:15},'burger',{sizes:1}),
+   GR_D('p_nap','dp-piz','Bacon burger','Medallón, panceta crocante y barbacoa.',11500,{carne:120,harina_pan:90,panceta:40,salsas:20},'burger',{sizes:1}),
+   GR_D('p_fug','dp-piz','Burger veggie','Medallón de legumbres, palta y tomate.',10900,{veggie:130,harina_pan:90,palta:40,tomate:30},'burger',{sizes:1}),
+   GR_D('p_cal','dp-piz','Sándwich de bondiola','Bondiola desmechada con barbacoa y cebolla.',11900,{cerdo:180,harina_pan:100,cebolla:40,salsas:20},'sandwich',{sizes:1}),
+   GR_D('p_4q','dp-piz','Choripán','Chorizo, chimichurri y criolla.',6900,{chorizo:1,harina_pan:100,salsas:20},'chori',{sizes:1}),
+   GR_D('p_dia','dp-piz','Lomito completo','Lomo, jamón, queso, huevo, lechuga y tomate.',13900,{lomo:180,harina_pan:150,huevo:1,cheddar:30,lechuga:20,tomate:40},'sandwich',{sizes:1}),
+   GR_D('p_hon','dp-piz','Pancho alemán','Salchicha alemana con papas pay y salsas.',4900,{salchicha:1,harina_pan:60,salsas:15},'pancho',{sizes:1}),
+   GR_D('p_sal','dp-piz','Tacos de pollo (3)','Tortillas, pollo, palta y pico de gallo.',9500,{harina_tort:3,pollo:150,palta:40,tomate:40},'tacos',{sizes:1}),
+   GR_D('p_ort','dp-piz','Wrap de pollo','Pollo grillado, verdes y salsa yogur.',8900,{harina_tort:1,pollo:150,lechuga:30,salsas:15},'wrap',{sizes:1}),
+   GR_D('e_foc','dp-ent','Papas fritas','Bastón, con sal y romero.',4900,{papa:250,aceite:50},'papas'),
+   GR_D('e_fai','dp-ent','Papas cheddar y panceta','Para compartir.',7900,{papa:300,cheddar:60,panceta:40,aceite:50},'papas'),
+   GR_D('e_bur','dp-ent','Aros de cebolla','Rebozados y crocantes.',5900,{cebolla:200,harina:60,aceite:50},'aros'),
+   GR_D('c_nap','dp-czn','Combo burger + papas + bebida','La de la casa con papas y gaseosa.',14900,{carne:240,harina_pan:90,cheddar:40,papa:200,aceite:50},'combo'),
+   GR_D('d_tir','dp-pos','Churros con dulce de leche (6)','Recién hechos.',4900,{harina:120,ddl:60,aceite:50},'churros'),
+   GR_D('d_nut','dp-pos','Brownie','Con nueces.',3900,{choco:60,harina:30,huevo:1},'brownie'),
+   GR_D('b_vin','dp-beb','Jugo de naranja','Exprimido al momento.',4200,{naranja:400},'jugo'),
+   GR_D('b_lim','dp-beb','Limonada','Con menta y jengibre.',4200,{limon:1},'limonada')],
+  drink:[['b_cer','Cerveza lata 473 ml',4900,2200,96,'cerveza',1],['b_gas','Gaseosa lata 354 ml',2800,850,120,'gaseosa',0],['b_agu','Agua 500 ml',2200,560,80,'agua',0]],
+  extra:[['x_muz','Cheddar extra',1800,{cheddar:30}],['x_cru','Panceta extra',2200,{panceta:30}],['x_hue','Huevo frito',1500,{huevo:1}],['x_ruc','Palta',1900,{palta:50}],
+   ['x_ace','Salsa extra',600,{salsas:20}],['x_bur','Medallón extra',4500,{carne:120}],['x_aji','Cebolla caramelizada',1200,{cebolla:50}],['x_sal','Papas extra',3500,{papa:200}]],
+  sizes:{g:'Doble',i:'Simple'},sub:{g:'Doble',i:'Simple'},
+  coupon:['FERIA10','10 % en combos durante la feria (compra mínima $ 12.000)'],plan:['Socio Mi Food Truck','5 % en todas las compras y papas de regalo por mes (ejemplo)'],reward:'Una burger de la casa de regalo',
+  ticket:'¡Gracias por elegir Mi Food Truck! Seguinos para saber dónde estamos.',note:'Pide la burger sin pepinos',
+  cocina:['Cocinero de plancha','Freidora y armado','Ayudante'],puesto:'Plancha y freidora',tasks:['Revisar garrafa, generador y conexión','Controlar la temperatura de la heladera del truck','Limpieza profunda de plancha y freidora'],
+  pick:'cerveza, gaseosa, agua, jugo, salsas, servilleta, bolsa, cubiertos',
+  proc:{'dp-piz':['Sellar el medallón en plancha bien caliente.','Agregar el queso y tapar 30 s.','Armar con el pan tostado y las salsas.'],'dp-ent':['Freír a 180 °C y salar al momento.'],'dp-czn':['Armar el combo y entregar en bolsa.'],'dp-pos':['Freír o porcionar y servir.'],'dp-beb':['Servir frío.']}},
+
+ darkkitchen:{n:'Mi Dark Kitchen',legal:'Mi Dark Kitchen (demo de ejemplo)',slogan:'Tres marcas, una sola cocina · Salta',title:'MI DARK KITCHEN',sub:'Tres marcas, una sola cocina · sólo delivery y retiro',
+  pitch:'**Burger Lab, Wok Express y Green Bowl** salen de la misma cocina.',hours:'Lun a dom · 12:00 a 15:00 y 19:30 a 00:30',mail:'midarkkitchen',
+  cats:[['dp-piz','Burger Lab','#ea580c','Burger Lab','grid'],['dp-ent','Wok Express','#dc2626','Wok Express','grid'],['dp-czn','Green Bowl','#16a34a','Green Bowl','grid'],['dp-pos','Postres','#9d174d','Postres','grid'],['dp-beb','Bebidas','#1d4ed8','Bebidas','grid'],['dp-adi','Extras','#4d7c0f','Extras','rows']],
+  ins:[['carne','Medallón de carne','kg',12000,'pv1',10,4],['harina_pan','Pan de papa','kg',3800,'pv2',6,2],['cheddar','Cheddar','kg',14000,'pv3',4,1.5],['panceta','Panceta ahumada','kg',16000,'pv1',3,1],['pollo','Pollo','kg',6500,'pv1',10,4],
+   ['lomo','Carne para wok','kg',16000,'pv1',4,1.5],['langost','Langostinos','kg',36000,'pv4',2,0.8],['arroz','Arroz yamaní','kg',3800,'pv5',8,3],['fideos','Fideos de arroz','kg',6000,'pv5',4,1.5],['soja','Salsa de soja','l',6000,'pv5',4,1.5],
+   ['vegetales','Vegetales para wok','kg',3500,'pv6',10,4],['salmon','Salmón rosado','kg',32000,'pv4',3,1],['quinoa','Quinoa','kg',9000,'pv5',3,1],['palta','Palta','kg',7000,'pv6',4,1.5],['lechuga','Verdes','kg',3000,'pv6',4,1.5],
+   ['papa','Papa bastón','kg',2600,'pv7',20,8],['huevo','Huevo','u',280,'pv6',60,20],['choco','Chocolate','kg',15000,'pv5',2,0.8],['limon','Limón','u',260,'pv6',40,15],['envases','Envases para delivery','u',350,'pv8',400,150]],
+  prov:GR_PROV([['Frigorífico del Valle','Carnes y pollo','387 421-1100','ventas@frigovalle.example',9800000],['Panadería El Molino','Panes','387 415-3300','pedidos@elmolino.example',0],['Lácteos La Quebrada','Quesos','387 431-2200','pedidos@laquebrada.example',0],
+   ['Pescadería del Norte','Pescados y mariscos','387 433-6600','hola@pescanorte.example',0],['Almacén Oriental','Arroces, fideos y salsas','387 422-4400','hola@oriental.example',3100000],['Mercado San Miguel · Puesto 14','Verdulería','387 415-3301','puesto14@mercado.example',0],
+   ['Congelados del Norte','Papas congeladas','387 433-6601','ventas@congeladosnorte.example',0],['Envases Salta','Envases y bolsas','387 490-5500','ventas@envasessalta.example',1450000]]),
+  dish:[GR_D('p_dip','dp-piz','Burger Lab doble','Doble medallón, cheddar, panceta y salsa Lab.',12900,{carne:240,harina_pan:90,cheddar:40,panceta:30,envases:1},'burger',{sizes:1,star:1}),
+   GR_D('p_marg','dp-piz','Cheeseburger Lab','Medallón, cheddar y pepinos.',9900,{carne:120,harina_pan:90,cheddar:30,envases:1},'burger',{sizes:1}),
+   GR_D('p_nap','dp-piz','Crispy chicken','Pollo crocante, lechuga y mayo de limón.',10900,{pollo:160,harina_pan:90,lechuga:20,envases:1},'burger',{sizes:1}),
+   GR_D('p_fug','dp-piz','Smash burger','Doble smash con cebolla a la plancha.',11500,{carne:200,harina_pan:90,cheddar:30,envases:1},'burger',{sizes:1}),
+   GR_D('p_cal','dp-piz','Papas Lab','Con cheddar y panceta.',7900,{papa:300,cheddar:60,panceta:40,envases:1},'papas',{sizes:1}),
+   GR_D('p_4q','dp-ent','Wok de pollo','Pollo, vegetales y arroz yamaní.',10900,{pollo:180,vegetales:150,arroz:80,soja:20,envases:1},'wok',{sizes:1}),
+   GR_D('p_dia','dp-ent','Wok de carne teriyaki','Carne, vegetales y fideos de arroz.',12900,{lomo:180,vegetales:150,fideos:90,soja:25,envases:1},'wok',{sizes:1}),
+   GR_D('p_hon','dp-ent','Wok de langostinos','Langostinos, vegetales y arroz.',16900,{langost:150,vegetales:150,arroz:80,soja:20,envases:1},'wok',{sizes:1}),
+   GR_D('p_sal','dp-ent','Pad thai','Fideos de arroz, pollo, huevo y maní.',11900,{fideos:110,pollo:120,huevo:1,soja:20,envases:1},'wok',{sizes:1}),
+   GR_D('p_ort','dp-ent','Arroz salteado con vegetales','Opción vegetariana.',8900,{arroz:120,vegetales:180,soja:20,envases:1},'wok',{sizes:1}),
+   GR_D('e_foc','dp-czn','Poke de salmón','Salmón, arroz, palta y edamame.',14900,{salmon:120,arroz:90,palta:50,envases:1},'bowl'),
+   GR_D('e_fai','dp-czn','Bowl de pollo y quinoa','Pollo grillado, quinoa y verdes.',11900,{pollo:150,quinoa:80,lechuga:50,envases:1},'bowl'),
+   GR_D('e_bur','dp-czn','Bowl veggie','Quinoa, palta, vegetales asados.',10500,{quinoa:90,palta:60,vegetales:120,envases:1},'bowl'),
+   GR_D('c_nap','dp-czn','Ensalada César bowl','Verdes, pollo, croutons y parmesano.',10900,{lechuga:150,pollo:120,harina_pan:30,envases:1},'ensalada'),
+   GR_D('d_tir','dp-pos','Brownie','Con nueces.',3900,{choco:60,huevo:1,envases:1},'brownie'),
+   GR_D('d_nut','dp-pos','Cookie gigante','Con chips de chocolate.',2900,{choco:30,envases:1},'brownie'),
+   GR_D('b_vin','dp-beb','Limonada','Con menta y jengibre.',4200,{limon:1},'limonada'),
+   GR_D('b_lim','dp-beb','Té helado','Con limón.',3900,{limon:0.5},'jugo')],
+  drink:[['b_cer','Cerveza lata 473 ml',4900,2200,96,'cerveza',1],['b_gas','Gaseosa lata 354 ml',2800,850,120,'gaseosa',0],['b_agu','Agua 500 ml',2200,560,80,'agua',0]],
+  extra:[['x_muz','Cheddar extra',1800,{cheddar:30}],['x_cru','Panceta extra',2200,{panceta:30}],['x_hue','Huevo',1500,{huevo:1}],['x_ruc','Palta',1900,{palta:50}],
+   ['x_ace','Salsa extra',600,{soja:20}],['x_bur','Medallón extra',4500,{carne:120}],['x_aji','Picante',500,{}],['x_sal','Papas extra',3500,{papa:200}]],
+  sizes:{g:'Grande',i:'Chico'},sub:{g:'Grande',i:'Chico'},
+  coupon:['TRESMARCAS','15 % si pedís de dos marcas en el mismo pedido (compra mínima $ 18.000)'],plan:['Socio Mi Dark Kitchen','5 % en todos los pedidos y envío gratis una vez por mes (ejemplo)'],reward:'Un plato de cualquier marca de regalo',
+  ticket:'¡Gracias por pedir en Mi Dark Kitchen! Burger Lab · Wok Express · Green Bowl.',note:'Pide wok sin maní',
+  cocina:['Jefe de cocina','Estación wok','Estación plancha y bowls'],puesto:'Cocina (3 marcas)',tasks:['Preparar la mise en place de las tres marcas','Controlar la temperatura de cámaras y heladeras','Limpieza profunda de woks y planchas'],
+  pick:'cerveza, gaseosa, agua, limonada, postre, salsas, palitos, cubiertos, bolsa térmica',
+  proc:{'dp-piz':['Sellar el medallón y armar la burger.','Envasar en caja de Burger Lab.'],'dp-ent':['Saltear en wok a fuego máximo.','Agregar la salsa al final y envasar en caja de Wok Express.'],'dp-czn':['Armar el bowl en frío y envasar en Green Bowl.'],'dp-pos':['Porcionar y envasar.'],'dp-beb':['Servir frío.']},
+  salon:false}};
+/* la cadena multisucursal usa la carta de comida rápida, con 3 sucursales y el consolidado de cajas */
+GR_ALL.cadena=Object.assign({},GR_ALL.foodtruck,{n:'Mi Cadena',legal:'Mi Cadena S.A. (demo de ejemplo)',slogan:'Hamburguesería con 3 sucursales · Salta',title:'MI CADENA',sub:'Hamburguesería · 3 sucursales',
+ pitch:'Misma receta en **todas las sucursales**: Centro, Tres Cerritos y Paseo Salta.',hours:'Lun a dom · 12:00 a 00:30',mail:'micadena',
+ coupon:['SUCURSAL15','15 % en cualquier sucursal de lunes a jueves (compra mínima $ 15.000)'],plan:['Socio Mi Cadena','5 % en todas las sucursales y papas de regalo por mes (ejemplo)'],reward:'Una burger de la casa en cualquier sucursal',
+ ticket:'¡Gracias por elegir Mi Cadena! Te esperamos en cualquiera de nuestras 3 sucursales.',
+ cocina:['Jefe de cocina','Cocina · plancha','Cocina · freidora'],puesto:'Cocina',tasks:['Revisar que la receta estándar esté igual en todas las sucursales','Controlar la temperatura de cámaras y heladeras','Limpieza profunda de plancha y freidora'],
+ branches:[['br_c','Centro','1'],['br_t','Tres Cerritos','2'],['br_p','Paseo Salta','3']]});
+const GRX=Object.assign({k:GR_KEY,ferm:GR_KEY==='pizzeria',half:GR_KEY==='pizzeria',salon:true,branches:null,
+ sizes:{g:'Grande',m:'Media grande',i:'Individual'},sub:{g:'Grande · 8 porciones',i:'Individual · 4 porciones'},alerg:null},GR_ALL[GR_KEY]||{});
+GRX.list=GR_LIST;
+/* alérgenos por insumo (nombre del insumo → alérgeno): gluten, lácteos, huevo, pescado, soja, maní */
+GRX.alergOf=id=>{id=String(id||'').replace(/^in-/,'');if(/^harina|bollo|garban|nachos/.test(id))return 'gluten (trigo)';if(/muzza|parm|roque|provo|mascar|burrata|leche$|crema|cheddar|quesocrema|manteca|ddl|helado/.test(id))return 'lácteos';
+ if(id==='huevo')return 'huevo';if(/salmon|langost/.test(id))return 'pescados y mariscos';if(id==='soja')return 'soja';return '';};
+if(GR_ALL[GR_KEY]){const R=GR_ALL[GR_KEY];const put=(A,B)=>{A.splice(0,A.length,...B);};
+ put(DP_CATS,R.cats.concat([['dp-ins','Insumos','#57534e','Insumos','rows']]));
+ if(typeof PERMS==='object'){PERMS.dp_caja='Caja: confirmar comandas, despachar delivery y cancelar';delete PERMS.dp_ferm;}
+ put(DP_INS,R.ins);put(DP_DISH,R.dish);put(DP_DRINK,R.drink);put(DP_EXTRA,R.extra);put(DP_PROV,R.prov);
+ /* cargos de la cocina según el rubro */
+ const cg={e7:R.cocina[0],e8:R.cocina[1],e11:R.cocina[2]};DP_STAFF.forEach(s=>{if(cg[s[0]])s[4]=cg[s[0]];});
+ /* la base de la demo con los textos del rubro */
+ const _pb=pizzaBase;pizzaBase=function(d){d=_pb(d);if(!d||!d.tenant||!window.__dpReady)return d;const N=R.n;
+  Object.assign(d.tenant,{name:N,legal:R.legal,slogan:R.slogan,address:'Av. Ejemplo 123, Salta (dato de ejemplo)'});
+  Object.assign(d.menu,{title:R.title,sub:{es:R.sub,en:R.sub},footer:{es:N+' · demo de evaluación',en:N+' · evaluation demo'},pitch:{es:R.pitch,en:R.pitch},mapQuery:'Av. Ejemplo 123, Salta'});
+  d.cfg.ticket=Object.assign({},d.cfg.ticket||{},{msg:R.ticket});
+  const c2=(d.coupons||[]).find(c=>c.id==='cp2');if(c2){c2.code=R.coupon[0];c2.note=R.coupon[1];}
+  const pl=(d.plans||[])[0];if(pl){pl.name=R.plan[0];pl.desc=R.plan[1];}
+  d.loyalty=Object.assign({},d.loyalty,{reward:R.reward});
+  const pc=(d.puestos||[]).find(p=>p.id==='pu_coc');if(pc)pc.name=R.puesto;
+  const tk=(id,t)=>{const x=(d.tasks||[]).find(y=>y.id===id);if(x)x.title=t;};tk('t1',R.tasks[0]);tk('t2',R.tasks[1]);tk('t6',R.tasks[2]);
+  const t4=(d.tasks||[]).find(y=>y.id==='t4');if(t4&&R.salon===false)t4.title='Armar el sector de retiro y la bolsa de cada pedido';
+  const t5=(d.tasks||[]).find(y=>y.id==='t5');if(t5)t5.title='Pedido semanal al proveedor principal';
+  (d.users||[]).forEach(u=>{if(u.email)u.email=u.email.replace(/@[a-z0-9.-]+$/,'@'+R.mail+'.example');});
+  if(d.cfg.rep){d.cfg.rep.pick=R.pick;d.cfg.rep.origen=Object.assign({},d.cfg.rep.origen,{dir:'Av. Ejemplo 123, Salta (ejemplo)'});d.cfg.rep.cobro=Object.assign({},d.cfg.rep.cobro,{alias:R.mail+'.mp (demo)',titular:N+' (demo)'});}
+  Object.keys(d.roles||{}).forEach(k=>{if(Array.isArray(d.roles[k]))d.roles[k]=d.roles[k].filter(p=>p!=='dp_ferm');});
+  /* cadena: 3 sucursales con su caja y el consolidado por sucursal */
+  if(R.branches){d.cfg.cashProfile='branches';d.branches=R.branches.map(([id,name,code])=>({id,name,code,active:true}));
+   d.registers=R.branches.map(([id,name,code])=>({id:'rg_'+id,code,name:'Caja '+name,type:'operational',branchId:id,parentId:'',active:true,created:now()-120*DPD}));d.tenant.regId='rg_br_c';}
+  return d;};
+ const _px=pizzaExtras;pizzaExtras=function(){_px();try{const c=S.customers&&S.customers[0];if(c)c.notes=R.note;
+  if(R.branches){const t0=now();const pool=S.products.filter(p=>p.menu&&p.active&&!p.posHide&&p.price>0);let seed=7;const Rn=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;};
+   const op=S.sessions.find(s=>!s.closedAt&&!s.demo);if(op){op.regId='rg_br_c';op.regName='Caja Centro';op.branchId='br_c';}
+   [['br_c','Centro',op?op.openedBy:'Caja · Camila'],['br_t','Tres Cerritos','Caja · Julián'],['br_p','Paseo Salta','Caja · Milagros']].forEach(([bid,bn,who],k)=>{const sid=bid==='br_c'&&op?op.id:'ses_'+bid;
+    if(!S.sessions.some(s=>s.id===sid))S.sessions.push({id:sid,caja:S.tenant.caja,openedBy:who,openedAt:t0-(170+k*20)*DPM,opening:2500000,closedAt:0,regId:'rg_'+bid,regName:'Caja '+bn,branchId:bid});
+    const n=7+k*3;for(let i=0;i<n;i++){const p=pool[Math.floor(Rn()*pool.length)];if(!p)continue;const q=1+Math.floor(Rn()*2);const tot=p.price*q;S.seq[S.tenant.caja]=(S.seq[S.tenant.caja]||0)+1;
+     S.sales.push({id:'cs'+bid+i,n:S.tenant.caja+'-'+S.seq[S.tenant.caja],ts:t0-(150-i*9)*DPM,user:who,caja:S.tenant.caja,sessId:sid,items:[{pid:p.id,name:pfull(p),rubro:p.rubro,qty:q,price:p.price,cost:isKit(p)?kitCost(p):p.cost,list:p.price,disc:0}],total:tot,method:['efectivo','qr','debito','credito'][i%4],doc:'ticket',
+      cust:'',custName:'',coupon:'',benefit:null,recv:0,fiado:false,demo:true,status:'ok',pays:null,paid:tot,balance:0,pstate:'pagada'});}});
+   S.sales.sort((a,b)=>a.ts-b.ts);}}catch(e){}};}

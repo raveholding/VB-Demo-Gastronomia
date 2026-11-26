@@ -28,8 +28,8 @@
   }
  ],
  "id": "./?app=sistema",
- "name": "Mi Pizzería · Sistema",
- "short_name": "Mi Pizzería",
+ "name": "Mi Restaurante · Sistema",
+ "short_name": "Mi Restaurante",
  "description": "Sistema de gestión: ventas, caja, stock, clientes, reparto y seguridad.",
  "start_url": "./#acceso",
  "orientation": "any",

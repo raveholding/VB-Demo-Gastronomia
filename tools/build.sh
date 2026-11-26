@@ -8,3 +8,4 @@ python3 tools/vb_gastro.py index.html
 python3 tools/vb_gastro.py app.webmanifest
 python3 tools/vb_gastro.py club.webmanifest
 python3 tools/vb_gastro.py sw.js
+python3 tools/vb_rubros.py

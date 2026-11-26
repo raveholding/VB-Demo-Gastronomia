@@ -1,7 +1,7 @@
 /* ===== p11b · CIRCUITO: estado S.dp, comanda, cobro, bollos, sincronización y API de la carta · capa Di Parma (perfil pizza). Ver p11a-pizza-datos.js para el panorama. ===== */
 /* ---------- estado de la capa (S.dp): mesas, comandas, carritos, cadetes, PedidosYa, fermentación ---------- */
 const DP_ST={pend_mozo:{l:'Esperando al mozo',s:'Mozo',step:1,c:'#7c3aed'},pend_caja:{l:'En caja',s:'Caja',step:2,c:'#2563eb'},pend_cocina:{l:'Recibido en cocina',s:'Cocina',step:3,c:'#b45309'},
- preparando:{l:'En el horno',s:'Horno',step:4,c:'#c2410c'},listo:{l:'Listo',s:'Listo',step:5,c:'#15803d'},en_camino:{l:'En camino',s:'Reparto',step:5,c:'#0e7490'},
+ preparando:{l:GRX.ferm?'En el horno':'En preparación',s:GRX.ferm?'Horno':'Cocina',step:4,c:'#c2410c'},listo:{l:'Listo',s:'Listo',step:5,c:'#15803d'},en_camino:{l:'En camino',s:'Reparto',step:5,c:'#0e7490'},
  entregado:{l:'Entregado',s:'Entregado',step:6,c:'#57534e'},cancelado:{l:'Cancelado',s:'Cancelado',step:0,c:'#b91c1c'}};
 const DP_CH={qr:'QR / NFC',mozo:'Mozo',voz:'Asistente',pedidosya:'PedidosYa',delivery:'Delivery propio',web:'Carta web',mostrador:'Mostrador'};
 const DP_ACTIVE=['pend_mozo','pend_caja','pend_cocina','preparando','listo','en_camino'];
@@ -32,7 +32,7 @@ function dpSeed(){const T=now();const D={v:1,seedAt:T,rev:T,tables:[],orders:[],
  D.carts.I5=[Ln('p_sal',1),Ln('p_marg_i',1,[],'sin albahaca')];sess('I5',4,2);
  D.notifs.push({id:++D.nseq,t:T-DPM,to:['mozo','admin'],tableId:'I4',txt:'Mesa 4 hizo un pedido desde el QR (4 ítems). Esperando validación.'});}
 function G(){if(!S.dp||!S.dp.tables||now()-(S.dp.seedAt||0)>14*DPH){dpSeed();try{dpBollosSync();}catch(e){}save();}
- if(S.cfg&&!S.cfg.dpFr){S.cfg.dpFr=1;S.products.forEach(p=>{if(p.dp&&p.dp.sizes&&!p.dp.ind&&!(p.fr&&p.fr.length))p.fr=[{l:'Media',f:0.5,price:dpHalfPrice(p.price/100)*100}];});save();} /* V27.10: datos guardados antes de la media pizza */
+ if(S.cfg&&!S.cfg.dpFr&&GRX.half){S.cfg.dpFr=1;S.products.forEach(p=>{if(p.dp&&p.dp.sizes&&!p.dp.ind&&!(p.fr&&p.fr.length))p.fr=[{l:'Media',f:0.5,price:dpHalfPrice(p.price/100)*100}];});save();} /* V27.10: datos guardados antes de la media pizza */
  return S.dp;}
 const dpT=id=>G().tables.find(t=>t.id===id);
 const dpO=id=>G().orders.find(o=>o.id===id);
@@ -143,7 +143,7 @@ function dpPubProd(p){const i=p.dp&&p.dp.sizes?dpP(p.id+'_i'):null;const agot=is
 function dpPubOrder(o){return{id:o.id,n:o.n,status:o.status,stl:DP_ST[o.status].l,step:DP_ST[o.status].step,eta:o.eta,etaAt:o.etaAt,total:dpOrderTot(o)/100,items:dpItems(o),channel:o.channel,tableId:o.tableId,log:o.log.map(l=>({s:l.s,t:l.t}))};}
 const DP_RL={};
 window.DP_API={
- ctx:mesa=>{const D=G();const t=mesa?dpT(String(mesa).toUpperCase()):null;return{biz:{name:'Di Parma Pizzería',sub:'Pizzería de masa madre',dir:S.tenant.address,hours:'Mar a dom · 19:30 a 00:30'},
+ ctx:mesa=>{const D=G();const t=mesa?dpT(String(mesa).toUpperCase()):null;return{biz:{name:GRX.n||'Di Parma Pizzería',sub:GRX.n?GRX.sub:'Pizzería de masa madre',dir:S.tenant.address,hours:GRX.hours||'Mar a dom · 19:30 a 00:30',prep:GRX.ferm?'En el horno':'En preparación',eta:GRX.ferm?'sale del horno en':'está listo en',note:GRX.n?'':'Masa madre de 48 a 72 h de maduración en frío, horno a 450 °C. Grande (8 porciones), media grande (4) o individual (4).',sg:GRX.n?GRX.sizes.g:'Grande · 8 porciones',si:GRX.n?GRX.sizes.i:'Individual · 4',sil:GRX.n?GRX.sizes.i.toLowerCase():'indiv.',salon:GRX.salon!==false,acc:(typeof window!=='undefined'&&window.VB_GR_ACC)||''},
   table:t?{id:t.id,label:t.label,sector:t.sector,mozo:dpFirst(dpEmpN(t.mozo)),open:!!t.session,bill:!!(t.session&&t.session.bill),total:dpTableTot(t)/100}:null,
   cats:DP_CATS.filter(c=>['dp-piz','dp-ent','dp-czn','dp-pos','dp-beb'].includes(c[0])).map(c=>({id:c[0],n:c[1],s:c[3]})),
   prods:S.products.filter(p=>p.active&&p.menu&&p.dp&&!p.dp.ind).map(dpPubProd),extras:S.products.filter(p=>p.active&&p.dp&&p.dp.extra).map(p=>({id:p.id,n:p.name,price:p.price/100})),
